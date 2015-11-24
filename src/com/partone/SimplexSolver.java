@@ -148,7 +148,7 @@ public class SimplexSolver {
 		cHat.set(newLIndex, -1 * c.get(oldEIndex) * AHat[newEIndex][newLIndex]);
 		
 		PivotReturn toReturn = new PivotReturn(AHat, bHat, cHat, NHat, BHat, vHat);
-		printDebug(toReturn);
+		// printDebug(toReturn);
 		return toReturn;
 	}
 	
@@ -189,7 +189,7 @@ public class SimplexSolver {
 		}
 		
 		PivotReturn toReturn = new PivotReturn(A, b, c, N, B, v);
-		printDebug(toReturn);
+		// printDebug(toReturn);
 		return toReturn;		
 	}
 	
@@ -329,7 +329,6 @@ public class SimplexSolver {
 		}
 	}
 	
-	/*
 	public static void main(String[] args) {
 		// Sample inputs
 		Double[][] A = new Double[8][6];
@@ -378,6 +377,5 @@ public class SimplexSolver {
 		System.out.println(Arrays.asList(results));
 		
 	}
-	*/
 	
 }

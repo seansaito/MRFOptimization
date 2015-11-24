@@ -245,7 +245,7 @@ public class NoiseCleaner {
 		// The diagonals of the section of A corresponding to the fp terms are all lambda
 		// They live in the range 2 * h * w to n
 		for (int i = 2 * h * w; i < n; i++) {
-			A[i][i] = lambda;
+			A[i][i] = 1.0;
 		}
 		
 		/*
@@ -292,10 +292,8 @@ public class NoiseCleaner {
 		 * for the flow constraints
 		 */
 		for (int i = n; i < m; i++) {
-			for (int j = 0; j < h * w; j++) {
-				A[i][j] = 1.0;
-				A[i][j + h * w] = -1.0;
-			}
+			A[i][i - n] = -1.0;
+			A[i][i - n + h * w] = 1.0;
 		}
 		
 		/*
@@ -307,116 +305,119 @@ public class NoiseCleaner {
 			int[] pixelImagePosition = getMatrixPosition(pixelLinearPosition, w);
 			int y = pixelImagePosition[0]; int x = pixelImagePosition[1];
 			Pixel pixel = imagePixels[y][x];
+			int nOffset = 2 * h * w - 1;
 			// Now for each pixel type (corner, edge, middle), get the coordinates of all fp edges
 			if (pixel.type.equals("middle")) {
-				Pixel leftPixel = imagePixels[y][x-1];
 				Pixel upPixel = imagePixels[y-1][x];
+				Pixel leftPixel = imagePixels[y][x-1];
 				Pixel rightPixel = imagePixels[y][x+1];
 				Pixel downPixel = imagePixels[y+1][x];
 				// Get the incoming edge positions. They will all be assigned lambda
-				int inUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", upPixel);
-				int inLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", leftPixel);
-				int inRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", rightPixel);
-				int inDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", downPixel);
+				int inUp = getFPLinearPosition(pixelEdges, getLinearPosition(y-1, x, w), "down", upPixel) + nOffset;
+				int inLeft = getFPLinearPosition(pixelEdges, getLinearPosition(y, x-1, w), "right", leftPixel) + nOffset;
+				int inRight = getFPLinearPosition(pixelEdges, getLinearPosition(y, x+1, w), "left", rightPixel) + nOffset;
+				int inDown = getFPLinearPosition(pixelEdges, getLinearPosition(y+1, x, w), "up", downPixel) + nOffset;
 				
-				A[i][inUp] = -1.0;
-				A[i][inLeft] = -1.0;
-				A[i][inRight] = -1.0;
-				A[i][inDown] = -1.0;
+				A[i][inUp] = 1.0;
+				A[i][inLeft] = 1.0;
+				A[i][inRight] = 1.0;
+				A[i][inDown] = 1.0;
 				
 				// Get the outgoing edge positions. They will all be assigned negative lambda
-				int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel);
-				int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel);
-				int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel);
-				int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel);
-				A[i][outUp] = 1.0;
-				A[i][outLeft] = 1.0;
-				A[i][outRight] = 1.0;
-				A[i][outDown] = 1.0;
+				int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel) + nOffset;
+				int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel) + nOffset;
+				int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel) + nOffset;
+				int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel) + nOffset;
+				A[i][outUp] = -1.0;
+				A[i][outLeft] = -1.0;
+				A[i][outRight] = -1.0;
+				A[i][outDown] = -1.0;
+				continue;
 			} else if (pixel.type.equals("edge")) {
 				if (pixel.up == null) {
 					Pixel leftPixel = imagePixels[y][x-1];
 					Pixel rightPixel = imagePixels[y][x+1];
 					Pixel downPixel = imagePixels[y+1][x];
 					// Get the incoming edge positions. They will all be assigned lambda
-					int inLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", leftPixel);
-					int inRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", rightPixel);
-					int inDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", downPixel);
-					A[i][inLeft] = -1.0;
-					A[i][inRight] = -1.0;
-					A[i][inDown] = -1.0;
+					int inLeft = getFPLinearPosition(pixelEdges, getLinearPosition(y, x-1, w), "right", leftPixel) + nOffset;
+					int inRight = getFPLinearPosition(pixelEdges, getLinearPosition(y, x+1, w), "left", rightPixel) + nOffset;
+					int inDown = getFPLinearPosition(pixelEdges, getLinearPosition(y+1, x, w), "up", downPixel) + nOffset;
+					A[i][inLeft] = 1.0;
+					A[i][inRight] = 1.0;
+					A[i][inDown] = 1.0;
 					
 					// Get the outgoing edge positions. They will all be assigned negative lambda
-					int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel);
-					int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel);
-					int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel);
-					A[i][outLeft] = 1.0;
-					A[i][outRight] = 1.0;
-					A[i][outDown] = 1.0;
+					int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel) + nOffset;
+					int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel) + nOffset;
+					int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel) + nOffset;
+					A[i][outLeft] = -1.0;
+					A[i][outRight] = -1.0;
+					A[i][outDown] = -1.0;
+					continue;
 				} else if (pixel.left == null) {
 					Pixel upPixel = imagePixels[y-1][x];
 					Pixel rightPixel = imagePixels[y][x+1];
 					Pixel downPixel = imagePixels[y+1][x];
 					// Get the incoming edge positions. They will all be assigned lambda
-					int inUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", upPixel);
-					int inRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", rightPixel);
-					int inDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", downPixel);
+					int inUp = getFPLinearPosition(pixelEdges, getLinearPosition(y-1, x, w), "down", upPixel) + nOffset;
+					int inRight = getFPLinearPosition(pixelEdges, getLinearPosition(y, x+1, w), "left", rightPixel) + nOffset;
+					int inDown = getFPLinearPosition(pixelEdges, getLinearPosition(y+1, x, w), "up", downPixel) + nOffset;
 					
-					A[i][inUp] = -1.0;
-					A[i][inRight] = -1.0;
-					A[i][inDown] = -1.0;
+					A[i][inUp] = 1.0;
+					A[i][inRight] = 1.0;
+					A[i][inDown] = 1.0;
 					
 					// Get the outgoing edge positions. They will all be assigned negative lambda
-					int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel);
-					int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel);
-					int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel);
-					A[i][outUp] = 1.0;
-					A[i][outRight] = 1.0;
-					A[i][outDown] = 1.0;
-					
+					int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel) + nOffset;
+					int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel) + nOffset;
+					int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel) + nOffset;
+					A[i][outUp] = -1.0;
+					A[i][outRight] = -1.0;
+					A[i][outDown] = -1.0;
+					continue;
 				} else if (pixel.right == null) {
 					Pixel leftPixel = imagePixels[y][x-1];
 					Pixel upPixel = imagePixels[y-1][x];
 					Pixel downPixel = imagePixels[y+1][x];
 					// Get the incoming edge positions. They will all be assigned lambda
-					int inUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", upPixel);
-					int inLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", leftPixel);
-					int inDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", downPixel);
+					int inUp = getFPLinearPosition(pixelEdges, getLinearPosition(y-1, x, w), "down", upPixel) + nOffset;
+					int inLeft = getFPLinearPosition(pixelEdges, getLinearPosition(y, x-1, w), "right", leftPixel) + nOffset;
+					int inDown = getFPLinearPosition(pixelEdges, getLinearPosition(y+1, x, w), "up", downPixel) + nOffset;
 					
-					A[i][inUp] = -1.0;
-					A[i][inLeft] = -1.0;
-					A[i][inDown] = -1.0;
+					A[i][inUp] = 1.0;
+					A[i][inLeft] = 1.0;
+					A[i][inDown] = 1.0;
 					
 					// Get the outgoing edge positions. They will all be assigned negative lambda
-					int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel);
-					int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel);
-					int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel);
-					A[i][outUp] = 1.0;
-					A[i][outLeft] = 1.0;
-					A[i][outDown] = 1.0;
-					
+					int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel) + nOffset;
+					int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel) + nOffset;
+					int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel) + nOffset;
+					A[i][outUp] = -1.0;
+					A[i][outLeft] = -1.0;
+					A[i][outDown] = -1.0;
+					continue;
 				} else { // down is null
 					Pixel leftPixel = imagePixels[y][x-1];
 					Pixel upPixel = imagePixels[y-1][x];
 					Pixel rightPixel = imagePixels[y][x+1];
 					// Get the incoming edge positions. They will all be assigned lambda
-					int inUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", upPixel);
-					int inLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", leftPixel);
-					int inRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", rightPixel);
+					int inUp = getFPLinearPosition(pixelEdges, getLinearPosition(y-1, x, w), "down", upPixel) + nOffset;
+					int inLeft = getFPLinearPosition(pixelEdges, getLinearPosition(y, x-1, w), "right", leftPixel) + nOffset;
+					int inRight = getFPLinearPosition(pixelEdges, getLinearPosition(y, x+1, w), "left", rightPixel) + nOffset;
 					
-					A[i][inUp] = -1.0;
-					A[i][inLeft] = -1.0;
-					A[i][inRight] = -1.0;
+					A[i][inUp] = 1.0;
+					A[i][inLeft] = 1.0;
+					A[i][inRight] = 1.0;
 					
 					// Get the outgoing edge positions. They will all be assigned negative lambda
-					int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel);
-					int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel);
-					int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel);
+					int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel) + nOffset;
+					int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel) + nOffset;
+					int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel) + nOffset;
 
-					A[i][outUp] = 1.0;
-					A[i][outLeft] = 1.0;
-					A[i][outRight] = 1.0;
-					
+					A[i][outUp] = -1.0;
+					A[i][outLeft] = -1.0;
+					A[i][outRight] = -1.0;
+					continue;
 				}
 			} else { // it's a corner node
 				if (pixel.up == null) {
@@ -424,34 +425,36 @@ public class NoiseCleaner {
 						Pixel rightPixel = imagePixels[y][x+1];
 						Pixel downPixel = imagePixels[y+1][x];
 						// Get the incoming edge positions. They will all be assigned lambda
-						int inRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", rightPixel);
-						int inDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", downPixel);
+						int inRight = getFPLinearPosition(pixelEdges, getLinearPosition(y, x+1, w), "left", rightPixel) + nOffset;
+						int inDown = getFPLinearPosition(pixelEdges, getLinearPosition(y+1, x, w), "up", downPixel) + nOffset;
 						
-						A[i][inRight] = -1.0;
-						A[i][inDown] = -1.0;
+						A[i][inRight] = 1.0;
+						A[i][inDown] = 1.0;
 						
 						// Get the outgoing edge positions. They will all be assigned negative lambda
-						int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel);
-						int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel);
+						int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel) + nOffset;
+						int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel) + nOffset;
 
-						A[i][outRight] = 1.0;
-						A[i][outDown] = 1.0;
+						A[i][outRight] = -1.0;
+						A[i][outDown] = -1.0;
+						continue;
 
 					} else { // right is null
 						Pixel leftPixel = imagePixels[y][x-1];
 						Pixel downPixel = imagePixels[y+1][x];
 						// Get the incoming edge positions. They will all be assigned lambda
-						int inLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", leftPixel);
-						int inDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", downPixel);
+						int inLeft = getFPLinearPosition(pixelEdges, getLinearPosition(y, x-1, w), "right", leftPixel) + nOffset;
+						int inDown = getFPLinearPosition(pixelEdges, getLinearPosition(y+1, x, w), "up", downPixel) + nOffset;
 						
-						A[i][inLeft] = -1.0;
-						A[i][inDown] = -1.0;
+						A[i][inLeft] = 1.0;
+						A[i][inDown] = 1.0;
 						
 						// Get the outgoing edge positions. They will all be assigned negative lambda
-						int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel);
-						int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel);
-						A[i][outLeft] = 1.0;
-						A[i][outDown] = 1.0;
+						int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel) + nOffset;
+						int outDown = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", pixel) + nOffset;
+						A[i][outLeft] = -1.0;
+						A[i][outDown] = -1.0;
+						continue;
 						
 					}
 				} else if (pixel.down == null) {
@@ -459,39 +462,87 @@ public class NoiseCleaner {
 						Pixel upPixel = imagePixels[y-1][x];
 						Pixel rightPixel = imagePixels[y][x+1];
 						// Get the incoming edge positions. They will all be assigned lambda
-						int inUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", upPixel);
-						int inRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", rightPixel);
+						int inUp = getFPLinearPosition(pixelEdges, getLinearPosition(y-1, x, w), "down", upPixel) + nOffset;
+						int inRight = getFPLinearPosition(pixelEdges, getLinearPosition(y, x+1, w), "left", rightPixel) + nOffset;
 						
-						A[i][inUp] = -1.0;
-						A[i][inRight] = -1.0;
+						A[i][inUp] = 1.0;
+						A[i][inRight] = 1.0;
 						
 						// Get the outgoing edge positions. They will all be assigned negative lambda
-						int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel);
-						int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel);
-						A[i][outUp] = 1.0;
-						A[i][outRight] = 1.0;
+						int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel) + nOffset;
+						int outRight = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", pixel) + nOffset;
+						A[i][outUp] = -1.0;
+						A[i][outRight] = -1.0;
+						continue;
 
 					} else { // right is null
 						Pixel leftPixel = imagePixels[y][x-1];
 						Pixel upPixel = imagePixels[y-1][x];
 						// Get the incoming edge positions. They will all be assigned lambda
-						int inUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "down", upPixel);
-						int inLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "right", leftPixel);
+						int inUp = getFPLinearPosition(pixelEdges, getLinearPosition(y, x-1, w), "down", upPixel) + nOffset;
+						int inLeft = getFPLinearPosition(pixelEdges, getLinearPosition(y-1, x, w), "right", leftPixel) + nOffset;
 						
-						A[i][inUp] = -1.0;
-						A[i][inLeft] = -1.0;
+						A[i][inUp] = 1.0;
+						A[i][inLeft] = 1.0;
 						
 						// Get the outgoing edge positions. They will all be assigned negative lambda
-						int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel);
-						int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel);
-						A[i][outUp] = 1.0;
-						A[i][outLeft] = 1.0;
+						int outUp = getFPLinearPosition(pixelEdges, pixelLinearPosition, "up", pixel) + nOffset;
+						int outLeft = getFPLinearPosition(pixelEdges, pixelLinearPosition, "left", pixel) + nOffset;
+						A[i][outUp] = -1.0;
+						A[i][outLeft] = -1.0;
+						continue;
 					}
 				}
 			}
 		}
 		
-		solver.print2DArray(A);
+//		solver.print2DArray(A);
+//		System.out.println(b);
+//		System.out.println(c);
+		
+		Double[] results = solver.Simplex(A, b, c);
+		Double[] truncatedResults = Arrays.copyOfRange(results, 0, 2 * h * w);
+		
+		
+		Double[] maxCapacity = new Double[2 * h * w];
+		Double[] residual = new Double[2 * h * w];
+		
+		for (int i = 0; i < 2 * h * w; i++) {
+			maxCapacity[i] = b.get(i);
+		}
+		
+		// Now subtract to get the residuals
+		for (int j = 0; j < 2 * h * w; j++) {
+			residual[j] = maxCapacity[j] - truncatedResults[j];
+		}
+		
+		System.out.println(Arrays.asList(truncatedResults));
+		System.out.println(Arrays.asList(maxCapacity));
+		System.out.println(Arrays.asList(residual));
+		
+		Double[][] result = new Double[h][w];
+		for (int i = 0; i < h; i++) {
+			for (int j = 0; j < w; j++) {
+				int sIndex = getLinearPosition(i, j, w);
+				int tIndex = sIndex + h * w;
+				// Case for when both residual locations are zero
+				if (residual[sIndex].equals(0.0) && residual[tIndex].equals(0.0)) {
+					double randInt = Math.floor(Math.random() + 0.5);
+					if (randInt == 1.0) { // choose blue
+						result[i][j] = 1.0;
+					} else { // choose yellow
+						result[i][j] = 0.0;
+					}
+				} else if (residual[sIndex].equals(0.0)) {
+					result[i][j] = 1.0;
+				} else {
+					result[i][j] = 0.0;
+				}
+			}
+		}
+		
+		image2.createImage(result, "result.png");
+		
 	}
 	
 }

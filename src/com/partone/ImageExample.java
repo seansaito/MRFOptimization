@@ -9,7 +9,7 @@ import javax.imageio.ImageIO;
 
 public class ImageExample {
 	
-	private String imageFileName = "bayes_in.jpg";
+	private String imageFileName = "bayes1.png";
 	
 	/*
 	public static void main(String[] args) {
