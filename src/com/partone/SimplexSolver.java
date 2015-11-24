@@ -329,6 +329,7 @@ public class SimplexSolver {
 		}
 	}
 	
+	/*
 	public static void main(String[] args) {
 		// Sample inputs
 		Double[][] A = new Double[8][6];
@@ -377,5 +378,6 @@ public class SimplexSolver {
 		System.out.println(Arrays.asList(results));
 		
 	}
+	*/
 	
 }

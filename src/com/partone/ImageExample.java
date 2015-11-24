@@ -2,21 +2,28 @@ package com.partone;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import javax.imageio.ImageIO;
 
-public class ImageExample extends Component {
+public class ImageExample {
 	
+	private String imageFileName = "bayes_in.jpg";
+	
+	/*
 	public static void main(String[] args) {
-		new ImageExample();
+		ImageExample imageExample = new ImageExample();
+		imageExample.parseImage();
 	}
+	*/
 	
-	public void printPixelARGB(int pixel) {
-		int alpha = (pixel >> 24) & 0xff;
-		int red = (pixel >> 16) & 0xff;
-		int green = (pixel >> 8) & 0xff;
-		int blue = (pixel) & 0xff;
-		System.out.print("argb: " + alpha + ", " + red + ", " + green + ", " + blue);
+	public ArrayList<Double> getPixelARGB(int pixel) {
+		Double alpha = (double) ((pixel >> 24) & 0xff);
+		Double red = (double) ((pixel >> 16) & 0xff);
+		Double green = (double) ((pixel >> 8) & 0xff);
+		Double blue = (double) ((pixel) & 0xff);
+		return new ArrayList<Double>(Arrays.asList(red, green, blue));
 	}
 	
 	private void marchThroughImage(BufferedImage image) {
@@ -28,20 +35,32 @@ public class ImageExample extends Component {
 			for (int j = 0; j < w; j++) {
 				System.out.println("x,y: " + j + ", " + i);
 				int pixel = image.getRGB(j, i);
-				printPixelARGB(pixel);
+				ArrayList<Double> rgb = getPixelARGB(pixel);
+				System.out.print("rgb: " + rgb.get(0)  + ", " + rgb.get(1) + ", " + rgb.get(2));
 				System.out.println("");
 			}
 		}
 	}
 	
-	public ImageExample() {
+	public void parseImage() {
 		try {
 			// get the BufferedImage, using the ImageIO class
 			BufferedImage image = 
-					ImageIO.read(this.getClass().getResource("bayes_in.jpg"));
+					ImageIO.read(this.getClass().getResource(imageFileName));
 			marchThroughImage(image);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
+		}
+	}
+	
+	public BufferedImage getImage() {
+		try {
+			BufferedImage image =
+					ImageIO.read(this.getClass().getResourceAsStream(imageFileName));
+			return image;
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
+			return null;
 		}
 	}
 	
